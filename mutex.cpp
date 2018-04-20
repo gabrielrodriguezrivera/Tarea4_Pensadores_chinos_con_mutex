@@ -10,27 +10,50 @@
 #include <ncurses.h>
 
 
+#define thread_num 6
+
 using namespace std;
 
-pthread_mutex_t palillos;
+pthread_mutex_t m[thread_num];
 
+int palillo[thread_num];
 
 struct Chino {
-    int pensar;
-    int comer;
+    int id;
+    bool comer;
+    int *left;
+    int *right;
 };
 
 void *brete(void* arg){
+    
     struct Chino *data = (struct Chino *) arg;
     int valor;
-    valor = rand() % 100;   //  funcion random entre 0 y 1
-    if (valor == 0){
-        data->comer = 0;
-        data->pensar = 1;
-    }
-    if (valor == 1){
-        data->comer = 1;
-        data->pensar = 0;
+    int sub = data->id;
+    int L = sub-1;
+    int R = sub;
+    bool locked = 0;
+    while(true){
+        valor = rand() % 100;   //  funcion random entre 0 y 1
+        if (valor < 55 && locked){
+           
+            data->comer = false;
+            *data->left = 0;
+            *data->right = 0;
+            locked = 0;
+            pthread_mutex_unlock(m + L);  //  Desbloquea el objeto
+            pthread_mutex_unlock(m + R);  //  Desbloquea el objeto
+        }
+        else{
+            pthread_mutex_lock(m + L);    //  Se bloquea el objeto
+            pthread_mutex_lock(m + R);    //  Se bloquea el objeto
+            locked = true;
+            *data->left = 1;
+            *data->right = 1;
+            data->comer = true;
+
+        }
+        usleep(500000);
     }
     pthread_exit(NULL); 
 }
@@ -44,9 +67,12 @@ const char* doubleToStr(double value){
 
 int main()
 {   
-    int N;
-    pthread_t my_thread[N];
+    int N = thread_num;
+    
+    pthread_t filosofo[N];
     struct Chino argArray[N];
+
+ 
 
     //  shm_open abre un objeto de memoria compartida:
     //  int shm_open(const char *name, int oflag, mode_t mode);
@@ -80,18 +106,28 @@ int main()
     //pthread_mutexattr_init(&shared);    //  inicializa la dirección del objeto de atributos mutex
     //pthread_mutexattr_setpshared(&shared, PTHREAD_PROCESS_SHARED);  //  la función establecerá el atributo de proceso compartido en un objeto de atributos
 
-    pthread_mutex_init(&palillos, NULL);   //  inicializa el mutex referenciado con los atributos que posee "&shared"
+    pthread_mutex_init(m, NULL);   //  inicializa el mutex referenciado con los atributos que posee "&shared"
     
     int i;
+    
     for (i = 0; i < 6; i++) {
-        int ret = pthread_create(&my_thread[i], NULL, &brete, (void*) &argArray[i]);    //  Crea un hilo y pasa por parametro el valor de la variable "pies"
+        palillo[i] = 0;
+        if(i == 0){
+            argArray[i].left = &palillo[N-1];
+            argArray[i].right = &palillo[i];
+        }
+        else{
+            argArray[i].left = &palillo[i-1];
+            argArray[i].right = &palillo[i];
+        }
+        argArray[i].comer = false;
+        argArray[i].id = i;
+        int ret = pthread_create(&filosofo[i], NULL, &brete, (void*) &argArray[i]);    //  Crea un hilo y pasa por parametro el valor de la variable "pies"
         if (ret != 0){
             printf("Error: pthread_create() failed\n");
             exit(EXIT_FAILURE);  
         }
-        pthread_mutex_lock(&palillos);    //  Se bloquea el objeto
-        sleep(1);   //  Hace una pequeña pausa
-        pthread_mutex_unlock(&palillos);  //  Desbloquea el objeto
+        
         
 
     //munmap(p, sizeof(struct shared*));  //  "Desmapea" (elimina) el archivo de memoria para liberar recursos
@@ -104,27 +140,27 @@ int main()
 
     WINDOW *w;
     initscr ();
+    raw();
+    start_color();
+    init_pair(1,COLOR_GREEN, COLOR_BLACK);
+    init_pair(2,COLOR_RED, COLOR_BLACK);
+    init_pair(3,COLOR_CYAN, COLOR_BLACK);
+    init_pair(4,COLOR_WHITE,COLOR_BLACK);
     noecho();
 
-    move(2, 0);
-    printw("Chino 1");
+    int x0 = 40;
+    int y0 = 12;
 
-    move(4, 0);
-    printw("Chino 2");
+    int a[N], b[N];
+    for (i=0; i<N; i++){
+        a[i]=1;
+        b[i]=4;
+    }
 
-    move(6, 0);
-    printw("Chino 3");
-
-    move(8, 0);
-    printw("Chino 4");
-
-    move(10, 0);
-    printw("Chino 5");
-
-    move(12, 0);
-    printw("Chino 6");
 
     while(ciclo==true){
+
+
         
         captura=getch();
         nodelay(stdscr, true);
@@ -134,18 +170,90 @@ int main()
             ciclo=false;
             tecla=&captura;
         }
-    }
 
-    for (i = 1; i <= 6; i++){
-        const char* prog = doubleToStr(argArray[i].pensar);
-        const char* abc = doubleToStr(argArray[i].comer);
-        move(2*i,6);
-        printw("%.2f",argArray[i].pensar);
-        move(2*i,20);
-        printw("%.2f",argArray[i].comer);
-        refresh();
+        for (i=0; i<N; i++){
+            
+            if(argArray[i].comer){
+                b[i] = 3;
+            }
+            else{
+                b[i] = 4;
+            }
+            if(palillo[i] == 1){
+                a[i] = 2;
+            }
+            else{
+                a[i] = 1;
+            }
+
+        }
+        
+        move(y0-3*2, x0-3*2);
+        attron(COLOR_PAIR(b[0]));
+        printw("Chino 1");
+        attron(COLOR_PAIR(b[0]));
+
+        move(y0-2*2, x0 + 3*2);
+        attron(COLOR_PAIR(a[0]));
+        printw("%c",'|');
+        ////printw("%d", *argArray[0].left);
+        attroff(COLOR_PAIR(a[0]));
+
+        move(y0-1*2, x0 + 4*2);
+        attron(COLOR_PAIR(b[1]));
+        printw("Chino 2");
+        attron(COLOR_PAIR(b[1]));
+
+        move(y0-0*2, x0 + 5*2);
+        attron(COLOR_PAIR(a[1]));
+        printw("%c",'|');
+        ////printw("%d", *argArray[1].left);
+        attroff(COLOR_PAIR(a[1]));
+
+        move(y0+1*2, x0 + 4*2);
+        attron(COLOR_PAIR(b[2]));
+        printw("Chino 3");
+        attron(COLOR_PAIR(b[2]));
+
+        move(y0+2*2, x0 + 3*2);
+        attron(COLOR_PAIR(a[2]));
+        printw("%c",'|');
+        //printw("%d", *argArray[2].left);
+        attroff(COLOR_PAIR(a[2]));
+
+        move(y0+3*2, x0-3*2);
+        attron(COLOR_PAIR(b[3]));
+        printw("Chino 4");
+        attron(COLOR_PAIR(b[3]));
+
+        move(y0+2*2, x0 - 6*2);
+        attron(COLOR_PAIR(a[3]));
+        printw("%c",'|');
+        attroff(COLOR_PAIR(a[3]));
+
+        move(y0+1*2, x0 - 10*2);
+        attron(COLOR_PAIR(b[4]));
+        printw("Chino 5");
+        attron(COLOR_PAIR(b[4]));
+
+        move(y0-0*2, x0 - 8*2);
+        attron(COLOR_PAIR(a[4]));
+        printw("%c",'|');
+        attroff(COLOR_PAIR(a[4]));
+
+        move(y0-1*2, x0 - 10*2);
+        attron(COLOR_PAIR(b[5]));
+        printw("Chino 6");
+        attron(COLOR_PAIR(b[5]));    
+
+        move(y0-2*2, x0 - 6*2);
+        attron(COLOR_PAIR(a[5]));
+        printw("%c",'|');
+        attroff(COLOR_PAIR(a[5]));
+        refresh();  
     }
 
     endwin ();
+    
     pthread_exit(NULL);
 }
