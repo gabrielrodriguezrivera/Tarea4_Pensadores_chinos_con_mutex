@@ -27,10 +27,12 @@ void *brete(void* arg){
     if (valor == 0){
         data->comer = 0;
         data->pensar = 1;
+        pthread_mutex_unlock(&palillos);  //  Desbloquea el objeto
     }
     if (valor == 1){
         data->comer = 1;
         data->pensar = 0;
+        pthread_mutex_lock(&palillos);    //  Se bloquea el objeto
     }
     pthread_exit(NULL); 
 }
@@ -44,9 +46,12 @@ const char* doubleToStr(double value){
 
 int main()
 {   
-    int N;
+    int N = 6;
+    
     pthread_t my_thread[N];
     struct Chino argArray[N];
+
+ 
 
     //  shm_open abre un objeto de memoria compartida:
     //  int shm_open(const char *name, int oflag, mode_t mode);
@@ -81,17 +86,18 @@ int main()
     //pthread_mutexattr_setpshared(&shared, PTHREAD_PROCESS_SHARED);  //  la función establecerá el atributo de proceso compartido en un objeto de atributos
 
     pthread_mutex_init(&palillos, NULL);   //  inicializa el mutex referenciado con los atributos que posee "&shared"
-    
+   
     int i;
+    
     for (i = 0; i < 6; i++) {
+        argArray[i].comer = 0;
+        argArray[i].pensar = 1;
         int ret = pthread_create(&my_thread[i], NULL, &brete, (void*) &argArray[i]);    //  Crea un hilo y pasa por parametro el valor de la variable "pies"
         if (ret != 0){
             printf("Error: pthread_create() failed\n");
             exit(EXIT_FAILURE);  
         }
-        pthread_mutex_lock(&palillos);    //  Se bloquea el objeto
-        sleep(1);   //  Hace una pequeña pausa
-        pthread_mutex_unlock(&palillos);  //  Desbloquea el objeto
+        
         
 
     //munmap(p, sizeof(struct shared*));  //  "Desmapea" (elimina) el archivo de memoria para liberar recursos
@@ -105,26 +111,14 @@ int main()
     WINDOW *w;
     initscr ();
     noecho();
-
-    move(2, 0);
-    printw("Chino 1");
-
-    move(4, 0);
-    printw("Chino 2");
-
-    move(6, 0);
-    printw("Chino 3");
-
-    move(8, 0);
-    printw("Chino 4");
-
-    move(10, 0);
-    printw("Chino 5");
-
-    move(12, 0);
-    printw("Chino 6");
+    for (i=0; i<N; i++){
+        move(2*(i+1), 10);
+        printw("Chino %d", i+1);
+    }
 
     while(ciclo==true){
+
+
         
         captura=getch();
         nodelay(stdscr, true);
@@ -134,17 +128,19 @@ int main()
             ciclo=false;
             tecla=&captura;
         }
+
+        for (i = 0; i < N; i++){
+            const char* prog = doubleToStr(argArray[i].pensar);
+            const char* abc = doubleToStr(argArray[i].comer);
+            move(2*(i+1), 25);
+            printw("%d",argArray[i].pensar);
+            move(2*(i+1), 35);
+            printw("%d",argArray[i].comer);
+            refresh();  
+        }
     }
 
-    for (i = 1; i <= 6; i++){
-        const char* prog = doubleToStr(argArray[i].pensar);
-        const char* abc = doubleToStr(argArray[i].comer);
-        move(2*i,6);
-        printw("%.2f",argArray[i].pensar);
-        move(2*i,20);
-        printw("%.2f",argArray[i].comer);
-        refresh();
-    }
+    
 
     endwin ();
     pthread_exit(NULL);
