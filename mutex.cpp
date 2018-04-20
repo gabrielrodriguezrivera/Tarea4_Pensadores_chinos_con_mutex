@@ -45,7 +45,7 @@ int main()
 {   
     int N = 6;
     
-    pthread_t my_thread[N];
+    pthread_t filosofo[N];
     struct Chino argArray[N];
 
  
@@ -88,7 +88,7 @@ int main()
     
     for (i = 0; i < 6; i++) {
         argArray[i].comer = 0;
-        int ret = pthread_create(&my_thread[i], NULL, &brete, (void*) &argArray[i]);    //  Crea un hilo y pasa por parametro el valor de la variable "pies"
+        int ret = pthread_create(&filosofo[i], NULL, &brete, (void*) &argArray[i]);    //  Crea un hilo y pasa por parametro el valor de la variable "pies"
         if (ret != 0){
             printf("Error: pthread_create() failed\n");
             exit(EXIT_FAILURE);  
@@ -138,7 +138,19 @@ int main()
         }
 
         for (i=0; i<N; i++){
-            if(filosofo[i].comer)
+            if(argArray[i].comer){
+                b[i] = 3;
+            }
+            else{
+                b[i] = 4;
+            }
+/*            if(palillo[i] == 'ocupado'){
+                a[i] = 2;
+            }
+            else{
+                a[i] = 1;
+            }
+*/
         }
         
         move(y0-3*2, x0-3*2);
