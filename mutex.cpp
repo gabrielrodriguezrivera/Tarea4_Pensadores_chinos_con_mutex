@@ -31,29 +31,32 @@ void *brete(void* arg){
     int valor;
     int sub = data->id;
     int L = sub-1;
+    if(L < 0){
+        L = L + thread_num;
+    }
     int R = sub;
     bool locked = 0;
     while(true){
         valor = rand() % 100;   //  funcion random entre 0 y 1
-        if (valor < 55 && locked){
+        if (valor < 55 && data->comer){
            
             data->comer = false;
             *data->left = 0;
             *data->right = 0;
-            locked = 0;
+        
             pthread_mutex_unlock(m + L);  //  Desbloquea el objeto
             pthread_mutex_unlock(m + R);  //  Desbloquea el objeto
         }
         else{
-            pthread_mutex_lock(m + L);    //  Se bloquea el objeto
-            pthread_mutex_lock(m + R);    //  Se bloquea el objeto
-            locked = true;
+            pthread_mutex_trylock(m + L);    //  Se bloquea el objeto
+            pthread_mutex_trylock(m + R);    //  Se bloquea el objeto
+    
             *data->left = 1;
             *data->right = 1;
             data->comer = true;
 
         }
-        usleep(500000);
+        usleep(2000000);
     }
     pthread_exit(NULL); 
 }
@@ -250,6 +253,8 @@ int main()
         attron(COLOR_PAIR(a[5]));
         printw("%c",'|');
         attroff(COLOR_PAIR(a[5]));
+
+        move(0,0);
         refresh();  
     }
 
