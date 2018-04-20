@@ -19,27 +19,39 @@ pthread_mutex_t m[thread_num];
 int palillo[thread_num];
 
 struct Chino {
+    int id;
     bool comer;
-    int left;
-    int right;
+    int *left;
+    int *right;
 };
 
 void *brete(void* arg){
+    
     struct Chino *data = (struct Chino *) arg;
     int valor;
-    valor = rand() % 100;   //  funcion random entre 0 y 1
-    if (valor == 0){
-        data->comer = false;
-        data->left = 0;
-        data->right = 0;
-        pthread_mutex_unlock(m);  //  Desbloquea el objeto
-    }
-    if (valor == 1){
-        pthread_mutex_lock(m);    //  Se bloquea el objeto
-        data->left = true;
-        data->right = 1;
-        data->comer = 1;
+    int L = *data->left;
+    int R = *data->right;
+    while(true){
+        srand(rand());
+        valor = rand() % 100;   //  funcion random entre 0 y 1
+        if (valor < 55 && data->comer){
+           
+            data->comer = false;
+            data->left = 0;
+            data->right = 0;
+            pthread_mutex_unlock(m + L);  //  Desbloquea el objeto
+            pthread_mutex_unlock(m + R);  //  Desbloquea el objeto
+        }
+        else{
 
+            *data->left = 1;
+            *data->right = 1;
+            data->comer = true;
+
+            pthread_mutex_lock(m + L);    //  Se bloquea el objeto
+            pthread_mutex_lock(m + R);    //  Se bloquea el objeto
+
+        }
     }
     pthread_exit(NULL); 
 }
@@ -99,14 +111,15 @@ int main()
     for (i = 0; i < 6; i++) {
         palillo[i] = 0;
         if(i == 0){
-            argArray[i].left = palillo[N-1];
-            argArray[i].right = palillo[i];
+            argArray[i].left = &palillo[N-1];
+            argArray[i].right = &palillo[i];
         }
         else{
-            argArray[i].left = palillo[i-1];
-            argArray[i].right = palillo[i];
+            argArray[i].left = &palillo[i-1];
+            argArray[i].right = &palillo[i];
         }
         argArray[i].comer = 0;
+        argArray[i].id = i;
         int ret = pthread_create(&filosofo[i], NULL, &brete, (void*) &argArray[i]);    //  Crea un hilo y pasa por parametro el valor de la variable "pies"
         if (ret != 0){
             printf("Error: pthread_create() failed\n");
@@ -234,8 +247,7 @@ int main()
         refresh();  
     }
 
-    
-
     endwin ();
+    
     pthread_exit(NULL);
 }
