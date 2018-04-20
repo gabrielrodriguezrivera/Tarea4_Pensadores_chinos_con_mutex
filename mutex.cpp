@@ -29,29 +29,31 @@ void *brete(void* arg){
     
     struct Chino *data = (struct Chino *) arg;
     int valor;
-    int L = *data->left;
-    int R = *data->right;
+    int sub = data->id;
+    int L = sub-1;
+    int R = sub;
+    bool locked = 0;
     while(true){
-        srand(rand());
         valor = rand() % 100;   //  funcion random entre 0 y 1
-        if (valor < 55 && data->comer){
+        if (valor < 55 && locked){
            
             data->comer = false;
             *data->left = 0;
             *data->right = 0;
+            locked = 0;
             pthread_mutex_unlock(m + L);  //  Desbloquea el objeto
             pthread_mutex_unlock(m + R);  //  Desbloquea el objeto
         }
         else{
-
+            pthread_mutex_lock(m + L);    //  Se bloquea el objeto
+            pthread_mutex_lock(m + R);    //  Se bloquea el objeto
+            locked = true;
             *data->left = 1;
             *data->right = 1;
             data->comer = true;
 
-            pthread_mutex_lock(m + L);    //  Se bloquea el objeto
-            pthread_mutex_lock(m + R);    //  Se bloquea el objeto
-
         }
+        usleep(500000);
     }
     pthread_exit(NULL); 
 }
@@ -176,8 +178,6 @@ int main()
             }
             else{
                 b[i] = 4;
-                move(0,0);
-                printw("holi");
             }
             if(palillo[i] == 1){
                 a[i] = 2;
@@ -196,7 +196,7 @@ int main()
         move(y0-2*2, x0 + 3*2);
         attron(COLOR_PAIR(a[0]));
         printw("%c",'|');
-        printw("%d", *argArray[0].left);
+        ////printw("%d", *argArray[0].left);
         attroff(COLOR_PAIR(a[0]));
 
         move(y0-1*2, x0 + 4*2);
@@ -207,7 +207,7 @@ int main()
         move(y0-0*2, x0 + 5*2);
         attron(COLOR_PAIR(a[1]));
         printw("%c",'|');
-        printw("%d", *argArray[1].left);
+        ////printw("%d", *argArray[1].left);
         attroff(COLOR_PAIR(a[1]));
 
         move(y0+1*2, x0 + 4*2);
@@ -218,7 +218,7 @@ int main()
         move(y0+2*2, x0 + 3*2);
         attron(COLOR_PAIR(a[2]));
         printw("%c",'|');
-        printw("%d", *argArray[2].left);
+        //printw("%d", *argArray[2].left);
         attroff(COLOR_PAIR(a[2]));
 
         move(y0+3*2, x0-3*2);
