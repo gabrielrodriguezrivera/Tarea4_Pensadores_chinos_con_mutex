@@ -32,7 +32,7 @@ void *brete(void* arg){
     int sub = data->id;
     int L = sub-1;
     if(L < 0){
-        L = L + thread_num;
+        L = thread_num-1;
     }
     int R = sub;
     bool locked = 0;
@@ -48,13 +48,12 @@ void *brete(void* arg){
             pthread_mutex_unlock(m + R);  //  Desbloquea el objeto
         }
         else{
-            pthread_mutex_trylock(m + L);    //  Se bloquea el objeto
-            pthread_mutex_trylock(m + R);    //  Se bloquea el objeto
+            if(pthread_mutex_trylock(m + L)==0 && pthread_mutex_trylock(m + R)==0 ){
     
             *data->left = 1;
             *data->right = 1;
             data->comer = true;
-
+            }
         }
         usleep(2000000);
     }
