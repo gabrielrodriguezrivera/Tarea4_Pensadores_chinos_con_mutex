@@ -16,8 +16,7 @@ pthread_mutex_t palillos;
 
 
 struct Chino {
-    int pensar;
-    int comer;
+    bool comer;
 };
 
 void *brete(void* arg){
@@ -26,12 +25,10 @@ void *brete(void* arg){
     valor = rand() % 100;   //  funcion random entre 0 y 1
     if (valor == 0){
         data->comer = 0;
-        data->pensar = 1;
         pthread_mutex_unlock(&palillos);  //  Desbloquea el objeto
     }
     if (valor == 1){
         data->comer = 1;
-        data->pensar = 0;
         pthread_mutex_lock(&palillos);    //  Se bloquea el objeto
     }
     pthread_exit(NULL); 
@@ -91,7 +88,6 @@ int main()
     
     for (i = 0; i < 6; i++) {
         argArray[i].comer = 0;
-        argArray[i].pensar = 1;
         int ret = pthread_create(&my_thread[i], NULL, &brete, (void*) &argArray[i]);    //  Crea un hilo y pasa por parametro el valor de la variable "pies"
         if (ret != 0){
             printf("Error: pthread_create() failed\n");
@@ -110,11 +106,23 @@ int main()
 
     WINDOW *w;
     initscr ();
+    raw();
+    start_color();
+    init_pair(1,COLOR_GREEN, COLOR_BLACK);
+    init_pair(2,COLOR_RED, COLOR_BLACK);
+    init_pair(3,COLOR_CYAN, COLOR_BLACK);
+    init_pair(4,COLOR_WHITE,COLOR_BLACK);
     noecho();
+
+    int x0 = 40;
+    int y0 = 12;
+
+    int a[N], b[N];
     for (i=0; i<N; i++){
-        move(2*(i+1), 10);
-        printw("Chino %d", i+1);
+        a[i]=1;
+        b[i]=4;
     }
+
 
     while(ciclo==true){
 
@@ -129,15 +137,70 @@ int main()
             tecla=&captura;
         }
 
-        for (i = 0; i < N; i++){
-            const char* prog = doubleToStr(argArray[i].pensar);
-            const char* abc = doubleToStr(argArray[i].comer);
-            move(2*(i+1), 25);
-            printw("%d",argArray[i].pensar);
-            move(2*(i+1), 35);
-            printw("%d",argArray[i].comer);
-            refresh();  
+        for (i=0; i<N; i++){
+            if(filosofo[i].comer)
         }
+        
+        move(y0-3*2, x0-3*2);
+        attron(COLOR_PAIR(b[0]));
+        printw("Chino 1");
+        attron(COLOR_PAIR(b[0]));
+
+        move(y0-2*2, x0 + 3*2);
+        attron(COLOR_PAIR(a[0]));
+        printw("%c",'|');
+        attroff(COLOR_PAIR(a[0]));
+
+        move(y0-1*2, x0 + 4*2);
+        attron(COLOR_PAIR(b[1]));
+        printw("Chino 2");
+        attron(COLOR_PAIR(b[1]));
+
+        move(y0-0*2, x0 + 5*2);
+        attron(COLOR_PAIR(a[1]));
+        printw("%c",'|');
+        attroff(COLOR_PAIR(a[1]));
+
+        move(y0+1*2, x0 + 4*2);
+        attron(COLOR_PAIR(b[2]));
+        printw("Chino 3");
+        attron(COLOR_PAIR(b[2]));
+
+        move(y0+2*2, x0 + 3*2);
+        attron(COLOR_PAIR(a[2]));
+        printw("%c",'|');
+        attroff(COLOR_PAIR(a[2]));
+
+        move(y0+3*2, x0-3*2);
+        attron(COLOR_PAIR(b[3]));
+        printw("Chino 4");
+        attron(COLOR_PAIR(b[3]));
+
+        move(y0+2*2, x0 - 6*2);
+        attron(COLOR_PAIR(a[3]));
+        printw("%c",'|');
+        attroff(COLOR_PAIR(a[3]));
+
+        move(y0+1*2, x0 - 10*2);
+        attron(COLOR_PAIR(b[4]));
+        printw("Chino 5");
+        attron(COLOR_PAIR(b[4]));
+
+        move(y0-0*2, x0 - 8*2);
+        attron(COLOR_PAIR(a[4]));
+        printw("%c",'|');
+        attroff(COLOR_PAIR(a[4]));
+
+        move(y0-1*2, x0 - 10*2);
+        attron(COLOR_PAIR(b[5]));
+        printw("Chino 6");
+        attron(COLOR_PAIR(b[5]));    
+
+        move(y0-2*2, x0 - 6*2);
+        attron(COLOR_PAIR(a[5]));
+        printw("%c",'|');
+        attroff(COLOR_PAIR(a[5]));
+        refresh();  
     }
 
     
