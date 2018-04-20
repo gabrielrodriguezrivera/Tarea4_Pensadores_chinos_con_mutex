@@ -54,6 +54,10 @@ void *brete(void* arg){
             *data->right = 1;
             data->comer = true;
             }
+            else{
+                pthread_mutex_unlock(m + L);  //  Desbloquea el objeto
+                pthread_mutex_unlock(m + R);  //  Desbloquea el objeto
+            }
         }
         usleep(2000000);
     }
@@ -163,9 +167,8 @@ int main()
     while(ciclo==true){
 
 
-        
-        captura=getch();
         nodelay(stdscr, true);
+        captura=getch();
         cbreak();
 
         if(captura==83 || captura==115){
