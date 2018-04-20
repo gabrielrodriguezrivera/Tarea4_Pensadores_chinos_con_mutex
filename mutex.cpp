@@ -10,13 +10,18 @@
 #include <ncurses.h>
 
 
+#define thread_num 6
+
 using namespace std;
 
-pthread_mutex_t palillos;
+pthread_mutex_t m[thread_num];
 
+int palillo[thread_num];
 
 struct Chino {
     bool comer;
+    int left;
+    int right;
 };
 
 void *brete(void* arg){
@@ -24,12 +29,17 @@ void *brete(void* arg){
     int valor;
     valor = rand() % 100;   //  funcion random entre 0 y 1
     if (valor == 0){
-        data->comer = 0;
-        pthread_mutex_unlock(&palillos);  //  Desbloquea el objeto
+        data->comer = false;
+        data->left = 0;
+        data->right = 0;
+        pthread_mutex_unlock(m);  //  Desbloquea el objeto
     }
     if (valor == 1){
+        pthread_mutex_lock(m);    //  Se bloquea el objeto
+        data->left = true;
+        data->right = 1;
         data->comer = 1;
-        pthread_mutex_lock(&palillos);    //  Se bloquea el objeto
+
     }
     pthread_exit(NULL); 
 }
@@ -43,7 +53,7 @@ const char* doubleToStr(double value){
 
 int main()
 {   
-    int N = 6;
+    int N = thread_num;
     
     pthread_t filosofo[N];
     struct Chino argArray[N];
@@ -82,11 +92,20 @@ int main()
     //pthread_mutexattr_init(&shared);    //  inicializa la dirección del objeto de atributos mutex
     //pthread_mutexattr_setpshared(&shared, PTHREAD_PROCESS_SHARED);  //  la función establecerá el atributo de proceso compartido en un objeto de atributos
 
-    pthread_mutex_init(&palillos, NULL);   //  inicializa el mutex referenciado con los atributos que posee "&shared"
-   
+    pthread_mutex_init(m, NULL);   //  inicializa el mutex referenciado con los atributos que posee "&shared"
+    
     int i;
     
     for (i = 0; i < 6; i++) {
+        palillo[i] = 0;
+        if(i == 0){
+            argArray[i].left = palillo[N-1];
+            argArray[i].right = palillo[i];
+        }
+        else{
+            argArray[i].left = palillo[i-1];
+            argArray[i].right = palillo[i];
+        }
         argArray[i].comer = 0;
         int ret = pthread_create(&filosofo[i], NULL, &brete, (void*) &argArray[i]);    //  Crea un hilo y pasa por parametro el valor de la variable "pies"
         if (ret != 0){
@@ -144,13 +163,13 @@ int main()
             else{
                 b[i] = 4;
             }
-/*            if(palillo[i] == 'ocupado'){
+            if(palillo[i] == 1){
                 a[i] = 2;
             }
             else{
                 a[i] = 1;
             }
-*/
+
         }
         
         move(y0-3*2, x0-3*2);
