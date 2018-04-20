@@ -37,8 +37,8 @@ void *brete(void* arg){
         if (valor < 55 && data->comer){
            
             data->comer = false;
-            data->left = 0;
-            data->right = 0;
+            *data->left = 0;
+            *data->right = 0;
             pthread_mutex_unlock(m + L);  //  Desbloquea el objeto
             pthread_mutex_unlock(m + R);  //  Desbloquea el objeto
         }
@@ -118,7 +118,7 @@ int main()
             argArray[i].left = &palillo[i-1];
             argArray[i].right = &palillo[i];
         }
-        argArray[i].comer = 0;
+        argArray[i].comer = false;
         argArray[i].id = i;
         int ret = pthread_create(&filosofo[i], NULL, &brete, (void*) &argArray[i]);    //  Crea un hilo y pasa por parametro el valor de la variable "pies"
         if (ret != 0){
@@ -170,11 +170,14 @@ int main()
         }
 
         for (i=0; i<N; i++){
+            
             if(argArray[i].comer){
                 b[i] = 3;
             }
             else{
                 b[i] = 4;
+                move(0,0);
+                printw("holi");
             }
             if(palillo[i] == 1){
                 a[i] = 2;
@@ -193,6 +196,7 @@ int main()
         move(y0-2*2, x0 + 3*2);
         attron(COLOR_PAIR(a[0]));
         printw("%c",'|');
+        printw("%d", *argArray[0].left);
         attroff(COLOR_PAIR(a[0]));
 
         move(y0-1*2, x0 + 4*2);
@@ -203,6 +207,7 @@ int main()
         move(y0-0*2, x0 + 5*2);
         attron(COLOR_PAIR(a[1]));
         printw("%c",'|');
+        printw("%d", *argArray[1].left);
         attroff(COLOR_PAIR(a[1]));
 
         move(y0+1*2, x0 + 4*2);
@@ -213,6 +218,7 @@ int main()
         move(y0+2*2, x0 + 3*2);
         attron(COLOR_PAIR(a[2]));
         printw("%c",'|');
+        printw("%d", *argArray[2].left);
         attroff(COLOR_PAIR(a[2]));
 
         move(y0+3*2, x0-3*2);
